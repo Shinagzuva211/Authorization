@@ -1,0 +1,7 @@
+◇ injected env (3) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+Mongoose connected
+Server running on http://localhost:3000
+[0mGET /health [32m200[0m 8.294 ms - 54[0m
+[0mPOST /api/users/register [32m201[0m 3951.220 ms - 155[0m
+[0mPOST /api/users/login [32m200[0m 573.632 ms - 189[0m
+[0mGET /cars [33m404[0m 0.620 ms - 21[0m
