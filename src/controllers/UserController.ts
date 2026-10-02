@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { userService } from '../services/UserService';
+import { signToken } from '../utils/token';
 
 export const userController = {
   create: async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -95,7 +96,8 @@ export const userController = {
         return;
       }
 
-      res.json({ user, token: 'mock-jwt-token' });
+      const token = signToken({ id: user.id, role: user.role });
+      res.json({ user, token });
     } catch (error) {
       next(error);
     }

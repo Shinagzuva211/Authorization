@@ -1,10 +1,11 @@
 import bcrypt from 'bcryptjs';
-import { User, IUser } from '../models/User';
+import { User, IUser, UserRole } from '../models/User';
 
 export interface UserResponse {
   id: string;
   name: string;
   email: string;
+  role: UserRole;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -15,20 +16,36 @@ const toUserResponse = (user: UserDoc): UserResponse => ({
   id: String(user._id),
   name: user.name,
   email: user.email,
+  role: user.role ?? 'user',
   createdAt: user.createdAt,
   updatedAt: user.updatedAt,
 });
 
 class UserService {
-  async create(name: string, email: string, password: string): Promise<UserResponse> {
+  async create(
+    name: string,
+    email: string,
+    password: string,
+    role: UserRole = 'user'
+  ): Promise<UserResponse> {
     const existing = await User.findOne({ email: email.toLowerCase() });
     if (existing) {
       throw new Error('Email already exists');
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await User.create({ name, email, password: hashedPassword });
+    const user = await User.create({ name, email, password: hashedPassword, role });
     return toUserResponse(user as UserDoc);
+  }
+
+  async upsertAdmin(name: string, email: string, password: string): Promise<UserResponse> {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = await User.findOneAndUpdate(
+      { email: email.toLowerCase() },
+      { name, password: hashedPassword, role: 'admin' },
+      { returnDocument: 'after', upsert: true, setDefaultsOnInsert: true }
+    );
+    return toUserResponse(user as unknown as UserDoc);
   }
 
   findAll(): Promise<UserResponse[]> {
@@ -44,7 +61,7 @@ class UserService {
   }
 
   update(id: string, data: Partial<IUser>): Promise<UserResponse | null> {
-    return User.findByIdAndUpdate(id, data, { new: true }).then((user) =>
+    return User.findByIdAndUpdate(id, data, { returnDocument: 'after' }).then((user) =>
       user ? toUserResponse(user as unknown as UserDoc) : null
     );
   }
